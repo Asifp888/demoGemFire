@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+
+  locator:
+    image: apachegeode/geode:1.15.1
+    container_name: geode-locator
+    command: >
+      bash -c "
+      gfsh start locator --name=locator --port=10334 --dir=/geode/locator &&
+      sleep infinity"
+    ports:
+      - "10334:10334"
+
+  server:
+    image: apachegeode/geode:1.15.1
+    container_name: geode-server
+    depends_on:
+      - locator
+    command: >
+      bash -c "
+      sleep 25 &&
+      gfsh start server --name=server --server-port=40404 --locators=locator[10334] --dir=/geode/server &&
+      sleep infinity"
+    ports:
+      - "40404:40404"
+
+  app:
+    build: .
+    container_name: spring-app
+    depends_on:
+      - locator
+      - server
+    restart: always
+    ports:
+      - "8080:8080"
